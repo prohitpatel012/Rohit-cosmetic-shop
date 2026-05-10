@@ -72,7 +72,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             <span className="font-medium">Back to Shop</span>
           </Link>
           <div className="flex items-center gap-4">
-             <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
               <Share2 className="w-5 h-5 text-gray-700" />
             </button>
             <button onClick={() => setIsCartOpen(true)} className="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
@@ -93,8 +93,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 p-6 sm:p-10">
             {/* Image Section */}
             <div className="relative aspect-square sm:aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100">
-              <img 
-                src={product.image} 
+              <img
+                src={product.image}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
@@ -107,42 +107,42 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
             {/* Info Section */}
             <div className="flex flex-col justify-center">
-              <span className="text-pink-600 font-semibold tracking-wider text-sm uppercase mb-2">
+              <span className="text-pink-600 font-semibold tracking-wider text-xs uppercase mb-1">
                 {product.category?.name}
               </span>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4 leading-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 leading-tight">
                 {product.name}
               </h1>
-              
-              <div className="flex items-center gap-2 mb-6">
-                <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${product.isavailable ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+
+              <div className="flex items-center gap-2 mb-4">
+                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${product.isavailable ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                   {product.isavailable ? 'In Stock' : 'Out of Stock'}
                 </span>
               </div>
 
-              <div className="flex items-end gap-3 mb-8">
-                <span className="text-4xl font-black text-gray-900">
-                  ${discountedPrice.toFixed(2)}
+              <div className="flex items-end gap-2 mb-6">
+                <span className="text-3xl font-black text-gray-900">
+                  ₹{discountedPrice.toFixed(2)}
                 </span>
                 {product.discount > 0 && (
-                  <span className="text-xl text-gray-400 line-through mb-1">
-                    ${product.price.toFixed(2)}
+                  <span className="text-lg text-gray-400 line-through mb-1">
+                    ₹{product.price.toFixed(2)}
                   </span>
                 )}
               </div>
 
-              <div className="prose prose-sm sm:prose-base text-gray-600 mb-8 leading-relaxed">
+              <div className="prose prose-sm text-gray-600 mb-6 leading-relaxed">
                 <p>{product.description}</p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 mb-8">
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
                 {product.isavailable ? (
-                  <button onClick={() => addToCart(product)} className="flex-1 bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 px-8 rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg">
-                    <ShoppingCart className="w-5 h-5" />
+                  <button onClick={() => addToCart(product)} className="flex-1 bg-gray-900 hover:bg-gray-800 text-white font-medium py-3 px-6 rounded-lg text-sm flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md">
+                    <ShoppingCart className="w-4 h-4" />
                     Add to Basket
                   </button>
                 ) : (
-                  <button disabled className="flex-1 bg-gray-200 text-gray-500 font-bold py-4 px-8 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed">
+                  <button disabled className="flex-1 bg-gray-100 text-gray-400 font-medium py-3 px-6 rounded-lg text-sm flex items-center justify-center gap-2 cursor-not-allowed">
                     Out of Stock
                   </button>
                 )}

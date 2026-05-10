@@ -27,7 +27,7 @@ export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'dashboard' | 'categories' | 'products'>('dashboard');
-  
+
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -53,7 +53,7 @@ export default function AdminPage() {
       ]);
       const catData = await catRes.json();
       const prodData = await prodRes.json();
-      
+
       setCategories(Array.isArray(catData) ? catData : []);
       setProducts(Array.isArray(prodData) ? prodData : []);
     } catch (error) {
@@ -106,7 +106,7 @@ export default function AdminPage() {
     e.preventDefault();
     setSubmitting(true);
     const formData = new FormData(e.currentTarget);
-    
+
     let imageUrl = editingProduct?.image || '';
     const imageFile = formData.get('imageFile') as File;
 
@@ -114,7 +114,7 @@ export default function AdminPage() {
       setUploadingImage(true);
       const uploadData = new FormData();
       uploadData.append('file', imageFile);
-      
+
       try {
         const uploadRes = await fetch('/api/upload', {
           method: 'POST',
@@ -138,7 +138,7 @@ export default function AdminPage() {
       }
       setUploadingImage(false);
     }
-    
+
     const payload = {
       name: formData.get('name'),
       description: formData.get('description'),
@@ -205,7 +205,7 @@ export default function AdminPage() {
           </div>
           <div className="flex items-center gap-3 self-start sm:self-auto w-full sm:w-auto">
             {view !== 'dashboard' && (
-              <button 
+              <button
                 onClick={() => {
                   setView('dashboard');
                   setShowCategoryForm(false);
@@ -219,7 +219,7 @@ export default function AdminPage() {
                 <span>Back</span>
               </button>
             )}
-            <button 
+            <button
               onClick={handleLogout}
               className="flex flex-1 sm:flex-none items-center space-x-2 px-3 py-2 sm:px-4 sm:py-2 bg-red-50 text-red-700 rounded-lg shadow-sm border border-red-100 hover:bg-red-100 transition-colors justify-center sm:justify-start"
             >
@@ -231,7 +231,7 @@ export default function AdminPage() {
 
         {view === 'dashboard' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            <div 
+            <div
               onClick={() => setView('categories')}
               className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 shadow-sm border border-gray-100 cursor-pointer hover:shadow-lg transition-all hover:-translate-y-1 group"
             >
@@ -251,7 +251,7 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <div 
+            <div
               onClick={() => setView('products')}
               className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 shadow-sm border border-gray-100 cursor-pointer hover:shadow-lg transition-all hover:-translate-y-1 group"
             >
@@ -277,7 +277,7 @@ export default function AdminPage() {
           <div className="space-y-4 sm:space-y-6 animate-in fade-in w-full">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 gap-3 sm:gap-0">
               <h2 className="text-lg sm:text-xl font-semibold text-gray-800">All Categories</h2>
-              <button 
+              <button
                 onClick={() => {
                   if (showCategoryForm && !editingCategory) {
                     setShowCategoryForm(false);
@@ -348,7 +348,7 @@ export default function AdminPage() {
                             <div className="text-xs sm:text-sm text-gray-600 line-clamp-2">{category.description}</div>
                           </td>
                           <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right font-medium">
-                            <button 
+                            <button
                               onClick={() => {
                                 setEditingCategory(category);
                                 setShowCategoryForm(true);
@@ -359,7 +359,7 @@ export default function AdminPage() {
                               <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
                               <span className="hidden sm:inline">Edit</span>
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleDeleteCategory(category._id)}
                               className="inline-flex items-center text-red-600 hover:text-red-900 bg-red-50 px-2 py-1.5 sm:px-3 sm:py-2 rounded-md sm:rounded-lg transition-colors"
                             >
@@ -381,7 +381,7 @@ export default function AdminPage() {
           <div className="space-y-4 sm:space-y-6 animate-in fade-in w-full">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 gap-3 sm:gap-0">
               <h2 className="text-lg sm:text-xl font-semibold text-gray-800">All Products</h2>
-              <button 
+              <button
                 onClick={() => {
                   if (showProductForm && !editingProduct) {
                     setShowProductForm(false);
@@ -396,7 +396,7 @@ export default function AdminPage() {
                 <span className="text-sm sm:text-base">{showProductForm && !editingProduct ? 'Cancel' : 'New Product'}</span>
               </button>
             </div>
-            
+
             {showProductForm && (
               <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-blue-100 p-4 sm:p-8 animate-in fade-in slide-in-from-top-4 relative">
                 <button onClick={() => setShowProductForm(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 p-2 rounded-full transition-colors">
@@ -408,7 +408,7 @@ export default function AdminPage() {
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Product Name</label>
                     <input required defaultValue={editingProduct?.name} name="name" type="text" className="w-full px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm sm:text-base" placeholder="e.g., Vitamin C Serum" />
                   </div>
-                  
+
                   <div className="col-span-1 sm:col-span-2">
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Description</label>
                     <textarea required defaultValue={editingProduct?.description} name="description" rows={3} className="w-full px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm sm:text-base" placeholder="Detailed product description..."></textarea>
@@ -433,7 +433,7 @@ export default function AdminPage() {
                   </div>
 
                   <div className="col-span-1">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Price ($)</label>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
                     <input required defaultValue={editingProduct?.price} name="price" type="number" step="0.01" min="0" className="w-full px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm sm:text-base" placeholder="0.00" />
                   </div>
 
@@ -491,7 +491,7 @@ export default function AdminPage() {
                             </div>
                           </td>
                           <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                            <div className="text-xs sm:text-sm font-bold text-gray-900">${product.price.toFixed(2)}</div>
+                            <div className="text-xs sm:text-sm font-bold text-gray-900">₹{product.price.toFixed(2)}</div>
                             {product.discount > 0 && (
                               <div className="text-[10px] sm:text-xs text-green-600 font-bold mt-1 bg-green-50 inline-block px-1.5 py-0.5 rounded-md">-{product.discount}%</div>
                             )}
@@ -510,7 +510,7 @@ export default function AdminPage() {
                             )}
                           </td>
                           <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right font-medium">
-                            <button 
+                            <button
                               onClick={() => {
                                 setEditingProduct(product);
                                 setShowProductForm(true);
@@ -521,7 +521,7 @@ export default function AdminPage() {
                               <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
                               <span className="hidden sm:inline">Edit</span>
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleDeleteProduct(product._id)}
                               className="inline-flex items-center text-red-600 hover:text-red-900 bg-red-50 px-2 py-1.5 sm:px-3 sm:py-2 rounded-md sm:rounded-lg transition-colors"
                             >
