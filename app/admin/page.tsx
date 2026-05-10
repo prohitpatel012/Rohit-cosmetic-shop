@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Package, Layers, ArrowLeft, Loader2, Edit, Trash2, Plus, X, Check } from 'lucide-react';
+import { Package, Layers, ArrowLeft, Loader2, Edit, Trash2, Plus, X, Check, LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface Category {
   _id: string;
@@ -21,6 +22,7 @@ interface Product {
 }
 
 export default function AdminPage() {
+  const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,6 +31,7 @@ export default function AdminPage() {
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Edit states
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -104,10 +107,42 @@ export default function AdminPage() {
     setSubmitting(true);
     const formData = new FormData(e.currentTarget);
     
+    let imageUrl = editingProduct?.image || '';
+    const imageFile = formData.get('imageFile') as File;
+
+    if (imageFile && imageFile.size > 0) {
+      setUploadingImage(true);
+      const uploadData = new FormData();
+      uploadData.append('file', imageFile);
+      
+      try {
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: uploadData
+        });
+        const result = await uploadRes.json();
+        if (uploadRes.ok && result.url) {
+          imageUrl = result.url;
+        } else {
+          console.error('Failed to upload image:', result);
+          alert('Failed to upload image');
+          setUploadingImage(false);
+          setSubmitting(false);
+          return;
+        }
+      } catch (err) {
+        console.error('Error uploading:', err);
+        setUploadingImage(false);
+        setSubmitting(false);
+        return;
+      }
+      setUploadingImage(false);
+    }
+    
     const payload = {
       name: formData.get('name'),
       description: formData.get('description'),
-      image: formData.get('image'),
+      image: imageUrl,
       category: formData.get('category'),
       price: Number(formData.get('price')),
       discount: Number(formData.get('discount') || 0),
@@ -146,6 +181,12 @@ export default function AdminPage() {
     }
   };
 
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/login');
+    router.refresh();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center w-full">
@@ -162,21 +203,30 @@ export default function AdminPage() {
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
             <p className="text-sm sm:text-base text-gray-500 mt-1">Manage your cosmetic shop's inventory</p>
           </div>
-          {view !== 'dashboard' && (
+          <div className="flex items-center gap-3 self-start sm:self-auto w-full sm:w-auto">
+            {view !== 'dashboard' && (
+              <button 
+                onClick={() => {
+                  setView('dashboard');
+                  setShowCategoryForm(false);
+                  setEditingCategory(null);
+                  setShowProductForm(false);
+                  setEditingProduct(null);
+                }}
+                className="flex flex-1 sm:flex-none items-center space-x-2 px-3 py-2 sm:px-4 sm:py-2 bg-white text-gray-700 rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors justify-center sm:justify-start"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back</span>
+              </button>
+            )}
             <button 
-              onClick={() => {
-                setView('dashboard');
-                setShowCategoryForm(false);
-                setEditingCategory(null);
-                setShowProductForm(false);
-                setEditingProduct(null);
-              }}
-              className="flex items-center space-x-2 px-3 py-2 sm:px-4 sm:py-2 bg-white text-gray-700 rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors self-start sm:self-auto w-full sm:w-auto justify-center sm:justify-start"
+              onClick={handleLogout}
+              className="flex flex-1 sm:flex-none items-center space-x-2 px-3 py-2 sm:px-4 sm:py-2 bg-red-50 text-red-700 rounded-lg shadow-sm border border-red-100 hover:bg-red-100 transition-colors justify-center sm:justify-start"
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back</span>
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
             </button>
-          )}
+          </div>
         </div>
 
         {view === 'dashboard' && (
@@ -365,8 +415,11 @@ export default function AdminPage() {
                   </div>
 
                   <div className="col-span-1">
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                    <input required defaultValue={editingProduct?.image} name="image" type="url" className="w-full px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm sm:text-base" placeholder="https://..." />
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Image Upload (Leave empty to keep existing)</label>
+                    <input name="imageFile" type="file" accept="image/*" className="w-full px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm sm:text-base bg-white" />
+                    {editingProduct?.image && (
+                      <p className="text-xs text-gray-500 mt-1 truncate">Current: {editingProduct.image}</p>
+                    )}
                   </div>
 
                   <div className="col-span-1">
@@ -395,9 +448,9 @@ export default function AdminPage() {
                   </div>
 
                   <div className="col-span-1 sm:col-span-2 pt-2 sm:pt-4 border-t border-gray-100 mt-2">
-                    <button disabled={submitting} type="submit" className="flex items-center justify-center space-x-2 w-full bg-gray-900 hover:bg-gray-800 text-white px-6 py-2.5 sm:px-8 sm:py-3 rounded-lg sm:rounded-xl font-medium transition-colors disabled:opacity-70 text-sm sm:text-base">
-                      {submitting ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" /> : <Check className="w-4 h-4 sm:w-5 sm:h-5" />}
-                      <span>{editingProduct ? 'Save Changes' : 'Save Product'}</span>
+                    <button disabled={submitting || uploadingImage} type="submit" className="flex items-center justify-center space-x-2 w-full bg-gray-900 hover:bg-gray-800 text-white px-6 py-2.5 sm:px-8 sm:py-3 rounded-lg sm:rounded-xl font-medium transition-colors disabled:opacity-70 text-sm sm:text-base">
+                      {(submitting || uploadingImage) ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" /> : <Check className="w-4 h-4 sm:w-5 sm:h-5" />}
+                      <span>{uploadingImage ? 'Uploading Image...' : editingProduct ? 'Save Changes' : 'Save Product'}</span>
                     </button>
                   </div>
                 </form>

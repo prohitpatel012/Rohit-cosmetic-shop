@@ -3,6 +3,7 @@
 import React, { useEffect, useState, use } from 'react';
 import { ArrowLeft, ShoppingCart, Star, Share2 } from 'lucide-react';
 import Link from 'next/link';
+import { useCart } from '@/context/CartContext';
 
 interface Category {
   _id: string;
@@ -24,6 +25,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const unwrappedParams = use(params);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const { addToCart, setIsCartOpen, cartCount } = useCart();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -73,8 +75,13 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
               <Share2 className="w-5 h-5 text-gray-700" />
             </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
+            <button onClick={() => setIsCartOpen(true)} className="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
               <ShoppingCart className="w-5 h-5 text-gray-700" />
+              {cartCount > 0 && (
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 text-white text-[10px] font-bold flex items-center justify-center rounded-full border border-white">
+                  {cartCount}
+                </div>
+              )}
             </button>
           </div>
         </div>
@@ -130,18 +137,15 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 {product.isavailable ? (
-                  <button className="flex-1 bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 px-8 rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg">
+                  <button onClick={() => addToCart(product)} className="flex-1 bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 px-8 rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg">
                     <ShoppingCart className="w-5 h-5" />
-                    Add to Cart
+                    Add to Basket
                   </button>
                 ) : (
                   <button disabled className="flex-1 bg-gray-200 text-gray-500 font-bold py-4 px-8 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed">
                     Out of Stock
                   </button>
                 )}
-                <button className="bg-pink-50 hover:bg-pink-100 text-pink-600 font-bold py-4 px-8 rounded-xl transition-colors">
-                  Buy Now
-                </button>
               </div>
 
               <div className="border-t border-gray-100 pt-6">

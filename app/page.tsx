@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Search, ShoppingCart, User, Sparkles } from 'lucide-react';
+import { Search, ShoppingCart, User, ArrowLeft, LogOut, Shield, Plus, Minus } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Category {
   _id: string;
@@ -21,20 +23,27 @@ interface Product {
 }
 
 export default function Home() {
+  const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { setIsCartOpen, cartCount, cart, addToCart, updateQuantity } = useCart();
+  const [session, setSession] = useState<any>(null);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   useEffect(() => {
     // Fetch categories and products
     Promise.all([
       fetch('/api/categories').then(res => res.json()),
-      fetch('/api/products').then(res => res.json())
-    ]).then(([cats, prods]) => {
+      fetch('/api/products').then(res => res.json()),
+      fetch('/api/auth/session').then(res => res.json().catch(() => ({})))
+    ]).then(([cats, prods, sess]) => {
       setCategories(Array.isArray(cats) ? cats : []);
       setProducts(Array.isArray(prods) ? prods : []);
+      if (sess?.authenticated) setSession(sess.user);
       setLoading(false);
     }).catch(err => {
       console.error(err);
@@ -52,53 +61,108 @@ export default function Home() {
       {/* Sticky Header exactly like the screenshot */}
       <header className="sticky top-0 z-50 bg-white flex flex-col w-full">
         {/* Layer 1: Top Bar */}
-        <div className="flex items-center justify-between px-4 h-14 w-full">
-          {/* Left: Logo */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1 cursor-pointer">
-              {/* Custom Logo for Rohit Cosmetic Shop */}
-              <div className="bg-pink-600 text-white p-1.5 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <span className="text-xl font-bold tracking-tight text-gray-900 ml-1 hidden sm:block">Rohit Cosmetic</span>
-              <span className="text-xl font-bold tracking-tight text-gray-900 ml-1 sm:hidden">Rohit</span>
-            </div>
-          </div>
+        <div className="flex items-center justify-between px-4 h-14 w-full relative">
 
-          {/* Center: Search Bar (YouTube Style) */}
-          <div className="hidden md:flex flex-1 max-w-[600px] ml-10 items-center">
-            <div className="flex w-full items-center">
-              <div className="flex w-full border border-gray-300 rounded-l-full px-4 py-2 focus-within:border-blue-600 focus-within:ml-0 ml-[32px] bg-white relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 hidden peer-focus:block">
-                  <Search className="w-4 h-4 text-gray-800" />
-                </div>
+          {/* Mobile Search View Overlay */}
+          {isSearchOpen ? (
+            <div className="flex items-center w-full bg-white z-10 gap-2 h-full">
+              <button onClick={() => setIsSearchOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0">
+                <ArrowLeft className="w-6 h-6 text-gray-900" />
+              </button>
+              <div className="flex flex-1 items-center bg-gray-100 rounded-full px-4 py-2">
                 <input
                   type="text"
                   placeholder="Search products..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full outline-none bg-transparent text-base peer"
+                  className="w-full outline-none bg-transparent text-base"
+                  autoFocus
                 />
               </div>
-              <button className="bg-gray-50 border border-l-0 border-gray-300 rounded-r-full px-5 py-2 hover:bg-gray-100 transition-colors tooltip relative group">
-                <Search className="w-5 h-5 text-gray-800" />
-              </button>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* Left: Logo */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1 cursor-pointer">
+                  <span className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">Rohit Cosmetic Shop</span>
+                </div>
+              </div>
 
-          {/* Right: Actions */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            <button className="md:hidden p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <Search className="w-6 h-6 text-gray-900" />
-            </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
-              <ShoppingCart className="w-6 h-6 text-gray-900" />
-              <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white"></div>
-            </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors ml-1">
-              <User className="w-6 h-6 text-gray-900" />
-            </button>
-          </div>
+              {/* Center: Search Bar (Desktop) */}
+              <div className="hidden md:flex flex-1 max-w-[600px] ml-10 items-center">
+                <div className="flex w-full items-center">
+                  <div className="flex w-full border border-gray-300 rounded-l-full px-4 py-2 focus-within:border-blue-600 bg-white relative">
+                    <input
+                      type="text"
+                      placeholder="Search products..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full outline-none bg-transparent text-base peer"
+                    />
+                  </div>
+                  <button className="bg-gray-50 border border-l-0 border-gray-300 rounded-r-full px-5 py-2 hover:bg-gray-100 transition-colors tooltip relative group">
+                    <Search className="w-5 h-5 text-gray-800" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Right: Actions */}
+              <div className="flex items-center gap-2 sm:gap-4">
+                <button onClick={() => setIsSearchOpen(true)} className="md:hidden p-2 hover:bg-gray-100 rounded-full transition-colors">
+                  <Search className="w-6 h-6 text-gray-900" />
+                </button>
+                <button onClick={() => setIsCartOpen(true)} className="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
+                  <ShoppingCart className="w-6 h-6 text-gray-900" />
+                  {cartCount > 0 && (
+                    <div className="absolute top-0 right-0 w-4 h-4 bg-red-600 text-white text-[10px] font-bold flex items-center justify-center rounded-full border border-white">
+                      {cartCount}
+                    </div>
+                  )}
+                </button>
+                
+                <div className="relative">
+                  {session ? (
+                    <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="w-8 h-8 rounded-full bg-pink-600 text-white flex items-center justify-center font-bold ml-1 hover:bg-pink-700 transition-colors shadow-sm focus:outline-none">
+                      {session.name.charAt(0).toUpperCase()}
+                    </button>
+                  ) : (
+                    <Link href="/login" className="p-2 hover:bg-gray-100 rounded-full transition-colors ml-1 inline-block">
+                      <User className="w-6 h-6 text-gray-900" />
+                    </Link>
+                  )}
+
+                  {showProfileMenu && session && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                      <div className="px-4 py-2 border-b border-gray-50 mb-1">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{session.name}</p>
+                        <p className="text-xs text-gray-500 truncate capitalize">{session.role}</p>
+                      </div>
+                      
+                      {session.role === 'admin' && (
+                        <Link href="/admin" className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors">
+                          <Shield className="w-4 h-4 text-pink-600" />
+                          Admin Dashboard
+                        </Link>
+                      )}
+                      
+                      <button 
+                        onClick={async () => {
+                          await fetch('/api/auth/logout', { method: 'POST' });
+                          setSession(null);
+                          setShowProfileMenu(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Layer 2: Categories (Pills) */}
@@ -154,49 +218,89 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8">
-            {filteredProducts.map(product => (
-              <Link href={`/product/${product._id}`} key={product._id} className="flex flex-col group cursor-pointer">
-                {/* Thumbnail */}
-                <div className="relative w-full aspect-video sm:rounded-xl overflow-hidden bg-gray-100">
-                  <img
-                    src={product.image || 'https://via.placeholder.com/600x338'}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
-                  {product.discount > 0 && (
-                    <div className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-                      {product.discount}% OFF
-                    </div>
-                  )}
-                  {/* Price overlay acting like the video duration */}
-                  <div className="absolute bottom-1.5 left-1.5 bg-black/80 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                    ${product.price.toFixed(2)}
-                  </div>
-                </div>
-
-                {/* Details */}
-                <div className="flex gap-3 mt-3 pr-6">
-                  {/* Avatar representing shop/brand */}
-                  <div className="w-9 h-9 bg-pink-100 rounded-full shrink-0 flex items-center justify-center text-pink-700 font-bold mt-0.5 shadow-sm border border-pink-200">
-                    {product.name.charAt(0).toUpperCase()}
+            {filteredProducts.map(product => {
+              const finalPrice = product.price - (product.price * (product.discount / 100));
+              const cartItem = cart.find(item => item._id === product._id);
+              return (
+                <div key={product._id} className="flex flex-col bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
+                  {/* Image Container */}
+                  <div 
+                    onClick={() => router.push(`/product/${product._id}`)}
+                    className="relative w-full aspect-square bg-gray-50 flex items-center justify-center p-4 cursor-pointer"
+                  >
+                    <img
+                      src={product.image || 'https://via.placeholder.com/600'}
+                      alt={product.name}
+                      className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300 mix-blend-multiply"
+                    />
+                    {product.discount > 0 && (
+                      <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-md shadow-sm">
+                        {product.discount}% OFF
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex flex-col">
-                    <h3 className="font-semibold text-gray-900 text-base line-clamp-2 leading-tight">
+                  {/* Details Section */}
+                  <div className="flex flex-col p-4 flex-1">
+                    <h3 
+                      onClick={() => router.push(`/product/${product._id}`)}
+                      className="font-medium text-gray-900 text-sm sm:text-base line-clamp-2 leading-snug hover:text-blue-600 transition-colors cursor-pointer"
+                    >
                       {product.name}
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1 hover:text-gray-900 transition-colors">
-                      {product.category?.name || 'Unknown Category'}
+                    <p className="text-xs text-gray-500 mt-1.5 line-clamp-2">
+                      {product.description}
                     </p>
-                    <div className="flex items-center text-sm text-gray-600 mt-0.5">
-                      <span className={product.isavailable ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-                        {product.isavailable ? 'In Stock' : 'Out of Stock'}
-                      </span>
+
+                    <div className="mt-auto pt-4">
+                      {/* Pricing */}
+                      <div className="flex items-center flex-wrap gap-1.5 mb-1">
+                        <span className="text-lg sm:text-xl font-bold text-gray-900">
+                          ${finalPrice.toFixed(2)}
+                        </span>
+                        {product.discount > 0 && (
+                          <span className="text-xs sm:text-sm text-gray-500 line-through ml-1">
+                            ${product.price.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Add to Cart logic */}
+                      <div className="mt-3 h-10">
+                        {!product.isavailable ? (
+                           <button disabled className="w-full h-full bg-gray-100 text-gray-400 font-bold rounded-lg text-sm cursor-not-allowed">
+                             Out of Stock
+                           </button>
+                        ) : cartItem ? (
+                          <div className="w-full h-full flex items-center justify-between border border-pink-600 rounded-lg overflow-hidden bg-pink-50">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); updateQuantity(product._id, cartItem.quantity - 1); }}
+                              className="w-10 h-full flex items-center justify-center text-pink-600 hover:bg-pink-100 transition-colors"
+                            >
+                              <Minus className="w-4 h-4" />
+                            </button>
+                            <span className="font-bold text-pink-600 text-sm">{cartItem.quantity}</span>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); updateQuantity(product._id, cartItem.quantity + 1); }}
+                              className="w-10 h-full flex items-center justify-center text-pink-600 hover:bg-pink-100 transition-colors"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); addToCart(product); }}
+                            className="w-full h-full bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-lg text-sm transition-colors flex items-center justify-center gap-2 active:scale-[0.98]"
+                          >
+                            <ShoppingCart className="w-4 h-4" /> Add to Basket
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </Link>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>
